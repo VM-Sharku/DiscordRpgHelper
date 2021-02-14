@@ -70,8 +70,6 @@ bot.EnchantDB = enchantdb.EnchantDB()
 async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
-    with open('icon.jpg', 'rb') as image:
-        await bot.user.edit(avatar=image)
 
 @bot.command()
 async def dice(ctx, max=6, count=1):
