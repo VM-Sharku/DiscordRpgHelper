@@ -224,4 +224,4 @@ if __name__ == "__main__":
     try:
         bot.run(str(sys.argv[1]))
     except IndexError as e:
-        print('run 스크립트로 실행하지 않아서 token 정보를 불러오는데 실패했습니다.')
+        print('run 스크립트로 실행하지 않아서 token 정보를 불러오는데 실패했습니다. ' + e)
