@@ -1,11 +1,11 @@
 from enchant import EnchantResult
 
 class Item():
-    def __init__(self, name="아이템"):
+    def __init__(self, name="아이템", level=0, highlevel=0, enchantCount=0):
         self.Name = name
-        self.__Level = 0
-        self.HighestLevel = 0
-        self.__EnchantCount = 0
+        self.__Level = level
+        self.HighestLevel = highlevel
+        self.__EnchantCount = enchantCount
         self.__Weight = 0
         self.__Price = 0
         self.LastEnchantResult = EnchantResult.SUCCESS

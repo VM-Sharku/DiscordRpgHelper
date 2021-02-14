@@ -68,6 +68,15 @@ bot.EnchantDB = enchantdb.EnchantDB()
 
 @bot.event
 async def on_ready():
+    print('SQL에 저장된 정보를 불러옵니다.')
+    
+    # 아이템 진행 정보 SQL
+    bot.EnchantDB.cursor.execute(f"SELECT * FROM enchant_processing")
+    itemProcessSQLResult = bot.EnchantDB.cursor.fetchone()
+
+    if itemProcessSQLResult != None:
+        bot.EnchantItems[itemProcessSQLResult[1]] = Item(itemProcessSQLResult[1], itemProcessSQLResult[2], itemProcessSQLResult[3], itemProcessSQLResult[4])
+    
     print(bot.user.name)
     print(bot.user.id)
 
@@ -159,15 +168,29 @@ async def effect(ctx, effectName):
 @bot.command(name="강화")
 async def enchant(ctx, itemname):
     user = ctx.author.id
-    bot.EnchantDB.cursor.execute(f"SELECT * FROM enchant_record WHERE user_id={user}")
-    sqlResult = bot.EnchantDB.cursor.fetchone()
+
+    # 아이템 최고 기록 SQL
+    bot.EnchantDB.cursor.execute(f"SELECT * FROM enchant_record WHERE USER_ID={user}")
+    highestRecordSQLResult = bot.EnchantDB.cursor.fetchone()
+
+    # 아이템 진행 정보 SQL
+    bot.EnchantDB.cursor.execute(f"SELECT * FROM enchant_processing")
+    itemProcessSQLResult = bot.EnchantDB.cursor.fetchone()
+
+    # 최초 아이템 진행정보 INSERT
+    if itemProcessSQLResult == None:
+        bot.EnchantDB.cursor.execute(f"INSERT INTO enchant_processing VALUES ({user},'{itemname}',0,0,0)")
+        bot.EnchantDB.Connection.commit()
+
+
     recordItem = ""
     recordHighestLevel = 0
-    if sqlResult == None:
+
+    if highestRecordSQLResult == None:
         bot.EnchantDB.cursor.execute(f"INSERT INTO enchant_record VALUES ({user},'',0)")
         bot.EnchantDB.Connection.commit()
     else:
-        _, recordItem, recordHighestLevel = sqlResult
+        _, recordItem, recordHighestLevel = highestRecordSQLResult
     if itemname in bot.EnchantItems:
         item = bot.EnchantItems[itemname]
         item.IncreaseEnchantCount()
@@ -179,6 +202,10 @@ async def enchant(ctx, itemname):
         if enchantResult is EnchantResult.SUCCESS:
             item.Enchant(1)
             message = baseMessage + f"+{item.Level}강 {item.Name} " + SuccessMessage[random.randrange(0,len(SuccessMessage))]
+            bot.EnchantDB.cursor.execute(f'''UPDATE enchant_processing
+                                                SET ITEM_NAME='{itemname}', ITEM_LEVEL={item.Level}, HIGHEST_ITEM_LEVEL={item.HighestLevel}, ENCHANT_COUNT={item.EnchantCount}
+                                                WHERE USER_ID={user}''')
+            bot.EnchantDB.Connection.commit()
             if item.HighestLevel > recordHighestLevel:
                 bot.EnchantDB.cursor.execute(f'''UPDATE enchant_record
                                                 SET HIGHEST_ITEM='{itemname}', HIGHEST_ITEM_LEVEL={item.Level}
