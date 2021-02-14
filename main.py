@@ -175,15 +175,15 @@ async def enchant(ctx, itemname):
         if item.ChanceTime is True:
             enchantResult = EnchantResult.SUCCESS
             item.ChanceTime = False
-        if item.HighestLevel > recordHighestLevel:
-            bot.EnchantDB.cursor.execute(f'''UPDATE enchant_record
-                                            SET HIGHEST_ITEM='{itemname}', HIGHEST_ITEM_LEVEL={item.Level}
-                                            WHERE USER_ID={user}''')
-            bot.EnchantDB.Connection.commit()
         baseMessage = f"```\n+{item.Level}강 {item.Name} 의 강화에 {ResultMessage[enchantResult]}하였습니다.\n"
         if enchantResult is EnchantResult.SUCCESS:
             item.Enchant(1)
             message = baseMessage + f"+{item.Level}강 {item.Name} " + SuccessMessage[random.randrange(0,len(SuccessMessage))]
+            if item.HighestLevel > recordHighestLevel:
+                bot.EnchantDB.cursor.execute(f'''UPDATE enchant_record
+                                                SET HIGHEST_ITEM='{itemname}', HIGHEST_ITEM_LEVEL={item.Level}
+                                                WHERE USER_ID={user}''')
+                bot.EnchantDB.Connection.commit()
         else:
             if enchantResult is EnchantResult.NORMAL:
                 message = baseMessage + f"{item.Name} " + NormalMessage[random.randrange(0,len(NormalMessage))]
