@@ -1,21 +1,19 @@
-from asyncio.tasks import sleep
-import discord
-from discord import message
-from discord.ext.commands import errors
-from discord.channel import VoiceChannel
-from discord.ext import commands
 import random
-from random import randint
-import copy
-import notion
-import sys
-import os.path
-import time
 import re
+import sys
+import time
+from asyncio.tasks import sleep
+from random import randint
+
+import discord
+from discord.ext import commands
+from discord.ext.commands import errors
+
 import effects
+import enchantdb
 from enchant import *
 from item import Item
-import enchantdb
+
 
 class RuleBook():
     def __init__(self):
@@ -63,8 +61,11 @@ class RPGBot(commands.Bot):
     
 
 bot = RPGBot(command_prefix="!")
+
 bot.EnchantItems = dict()
 bot.EnchantDB = enchantdb.EnchantDB()
+for item in bot.EnchantDB.getItems():
+    bot.EnchantItems[item.Name] = item
 
 @bot.event
 async def on_ready():
@@ -157,64 +158,66 @@ async def effect(ctx, effectName):
     voiceClient.play(audio)
 
 @bot.command(name="강화")
-async def enchant(ctx, itemname):
-    user = ctx.author.id
-    bot.EnchantDB.cursor.execute(f"SELECT * FROM enchant_record WHERE user_id={user}")
-    sqlResult = bot.EnchantDB.cursor.fetchone()
-    recordItem = ""
-    recordHighestLevel = 0
-    if sqlResult == None:
-        bot.EnchantDB.cursor.execute(f"INSERT INTO enchant_record VALUES ({user},'',0)")
-        bot.EnchantDB.Connection.commit()
+async def enchant(ctx, itemname="당신의 미래"):
+    uid = ctx.author.id
+    item = bot.EnchantDB.getItem(itemname)
+    if item == None:
+        item = Item(itemname)
+        bot.EnchantDB.addItem(item)
+    rank = bot.EnchantDB.getRanking(itemname)
+    prevHighestLevel = 0
+    if rank != None:
+        _, _, prevHighestLevel, _ = bot.EnchantDB.getRanking(itemname)
     else:
-        _, recordItem, recordHighestLevel = sqlResult
-    if itemname in bot.EnchantItems:
-        item = bot.EnchantItems[itemname]
-        item.IncreaseEnchantCount()
-        enchantResult = enchant_internal(item.Level)
-        if item.ChanceTime is True:
-            enchantResult = EnchantResult.SUCCESS
-            item.ChanceTime = False
-        baseMessage = f"```\n+{item.Level}강 {item.Name} 의 강화에 {ResultMessage[enchantResult]}하였습니다.\n"
-        if enchantResult is EnchantResult.SUCCESS:
-            item.Enchant(1)
-            message = baseMessage + f"+{item.Level}강 {item.Name} " + SuccessMessage[random.randrange(0,len(SuccessMessage))]
-            if item.HighestLevel > recordHighestLevel:
-                bot.EnchantDB.cursor.execute(f'''UPDATE enchant_record
-                                                SET HIGHEST_ITEM='{itemname}', HIGHEST_ITEM_LEVEL={item.Level}
-                                                WHERE USER_ID={user}''')
-                bot.EnchantDB.Connection.commit()
-        else:
-            if enchantResult is EnchantResult.NORMAL:
-                message = baseMessage + f"{item.Name} " + NormalMessage[random.randrange(0,len(NormalMessage))]
-            elif enchantResult is EnchantResult.FAIL:
-                if item.LastEnchantResult is EnchantResult.FAIL:
-                    item.ChanceTime = True
-                item.Enchant(-1)
-                message = baseMessage + f"{item.Name} " + FailMessage[random.randrange(0,len(FailMessage))]
-            elif enchantResult is EnchantResult.BREAK:
-                bot.EnchantItems.pop(itemname)
-                message = baseMessage + f"+{item.Level}강 {item.Name}" + BreakMessage[random.randrange(0,len(BreakMessage))]
-        item.LastEnchantResult = enchantResult
-        message += f"\n강화 횟수: {item.EnchantCount} | 최대 강화 레벨: {item.HighestLevel}\n```"
-        await ctx.send(message)
-    else:
-        bot.EnchantItems[itemname] = Item(itemname)
-        await enchant(ctx, itemname)
+        bot.EnchantDB.addRanking(itemname, uid, 0, 0)
+    enchantResult = enchant_internal(item.Level)
+    item.IncreaseEnchantCount()
+    # maple story enchant rule - fail-in-row sures 100% success in next trial
+    resultMessage = "```\n"
+    if item.ChanceTime == True:
+        enchantResult = EnchantResult.SUCCESS
+        resultMessage += "☆★되는게 없는 당신을 위한 선물★☆\n"
+    # setup message
+    newHighestLevel = prevHighestLevel
+    resultMessage += f"+{item.Level}강 {item.Name} 의 강화에 {enchantResult}하였습니다.\n"
+    if enchantResult == EnchantResult.SUCCESS:
+        item.Enchant(1)
+        resultMessage += f"+{item.Level}강 {item.Name} " + SuccessMessage[random.randrange(0,len(SuccessMessage))]
+        if item.Level > prevHighestLevel:
+            bot.EnchantDB.updateRanking(itemname, uid, item.Level, item.EnchantCount)
+            newHighestLevel = item.Level
+        item.ChanceTime = False
+    elif enchantResult == EnchantResult.NORMAL:
+        resultMessage += f"{item.Name} " + NormalMessage[random.randrange(0,len(NormalMessage))]
+    elif enchantResult == EnchantResult.FAIL:
+        if item.LastEnchantResult == EnchantResult.FAIL:
+            item.ChanceTime = True
+        item.Enchant(-1)
+        resultMessage += f"{item.Name} " + FailMessage[random.randrange(0,len(FailMessage))]
+    elif enchantResult == EnchantResult.BREAK:
+        resultMessage += f"+{item.Level}강 {item.Name}" + BreakMessage[random.randrange(0,len(BreakMessage))]
+        bot.EnchantDB.removeItem(itemname)
+    item.LastEnchantResult = enchantResult
+    if item.LastEnchantResult != EnchantResult.BREAK:
+        bot.EnchantDB.updateItem(item)
+    resultMessage += f"\n강화 횟수: {item.EnchantCount} | 최대 강화 레벨: {newHighestLevel}\n```"
+    await ctx.send(resultMessage)
 
 @bot.command(name="강화순위")
-async def enchantrecord(ctx):
-    bot.EnchantDB.cursor.execute(f"SELECT * FROM enchant_record ORDER BY HIGHEST_ITEM_LEVEL DESC;")
-    ranks = bot.EnchantDB.cursor.fetchmany(10)
+async def enchantrecord(ctx, count=10):
+    ranks = bot.EnchantDB.getRankings(count)
     messages = []
     rankIndex = 1
     if ranks != None:
-        for user_id,itemname,level in ranks:
+        for itemname,user_id,level,enchantcount in ranks:
+            username = "None"
             user = await bot.fetch_user(user_id)
-            messages.append(f'{rankIndex}등 {user.name} | {itemname} | +{level}강')
+            if user != None:
+                username = user.name
+            messages.append(f'{rankIndex}등\t| {itemname} | +{level}강 | {username} | 강화 횟수: {enchantcount}회')
             rankIndex += 1
     rankMessage = "\n".join(messages)
-    await ctx.send(f"```\nTOP 10 LIST\n{rankMessage}\n```" )
+    await ctx.send(f"```\nTOP {count} LIST\n{rankMessage}\n```" )
 
 @bot.command()
 async def vcs(ctx):

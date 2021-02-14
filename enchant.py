@@ -1,18 +1,20 @@
 from enum import Enum
 import random
 
-class EnchantResult():
+class EnchantResult(Enum):
     SUCCESS = 0
     NORMAL = 1
     FAIL = 2
     BREAK = 3
-
-ResultMessage = {
-    EnchantResult.SUCCESS:"성공",
-    EnchantResult.NORMAL:"실패",
-    EnchantResult.FAIL:"실패",
-    EnchantResult.BREAK:"실패",
-}
+    def __str__(self):
+        if self == EnchantResult.SUCCESS:
+            return "성공"
+        elif self == EnchantResult.NORMAL:
+            return "실패"
+        elif self == EnchantResult.FAIL:
+            return "실패"
+        elif self == EnchantResult.BREAK:
+            return "실패"
 
 class EnchantChance():
     def __init__(self,successRate=250,normalRate=250,failRate=250,breakRate=250):

@@ -4,7 +4,7 @@ class Item():
     def __init__(self, name="아이템"):
         self.Name = name
         self.__Level = 0
-        self.HighestLevel = 0
+
         self.__EnchantCount = 0
         self.__Weight = 0
         self.__Price = 0
@@ -21,11 +21,12 @@ class Item():
             self.__Level = 0
             return
         self.__Level += mod
-        if self.__Level > self.HighestLevel:
-            self.HighestLevel = self.__Level
     @property
     def EnchantCount(self):
         return self.__EnchantCount
+    @EnchantCount.setter
+    def EnchantCount(self, newCount):
+        self.__EnchantCount = newCount
     def IncreaseEnchantCount(self):
         self.__EnchantCount += 1
     @property
