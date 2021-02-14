@@ -1,6 +1,5 @@
 from enum import Enum
 import random
-import korean
 
 class EnchantResult():
     SUCCESS = 0
