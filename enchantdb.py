@@ -29,7 +29,7 @@ class EnchantDB():
             return None
         return result
     def getRankings(self, size=10):
-        self.cursor.execute(f"SELECT * FROM {EnchantDB.SchemaName_rank} ORDER BY HIGHEST_LEVEL DESC;")
+        self.cursor.execute(f"SELECT * FROM {EnchantDB.SchemaName_rank} ORDER BY HIGHEST_LEVEL DESC, ENCHANT_COUNT ASC;")
         return self.cursor.fetchmany(size)
     def addRanking(self, itemname, uid, highestLevel, enchantCount):
         self.cursor.execute(f"INSERT INTO {EnchantDB.SchemaName_rank} VALUES ('{itemname}',{uid},{highestLevel},{enchantCount});")
