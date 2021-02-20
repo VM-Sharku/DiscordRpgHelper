@@ -145,7 +145,7 @@ async def leave(ctx):
     if authorVoiceChannel is not None:
         for voiceClient in bot.voice_clients:
             if voiceClient != None and voiceClient.channel == authorVoiceChannel:
-                voiceClient.disconnect()
+                await voiceClient.disconnect()
                 pass
 
 @bot.command()
