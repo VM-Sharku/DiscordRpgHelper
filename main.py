@@ -6,6 +6,7 @@ from asyncio.tasks import sleep
 from random import randint
 
 import discord
+from discord.channel import VoiceChannel
 from discord.ext import commands
 from discord.ext.commands import errors
 
@@ -137,6 +138,12 @@ async def join(ctx):
     voiceChannel = ctx.author.voice.channel
     if voiceChannel is not None:
         await voiceChannel.connect()
+
+@bot.command()
+async def leave(ctx):
+    voiceChannel = ctx.author.voice.channel
+    if voiceChannel is not None:
+        await voiceChannel.disconnect()
 
 @bot.command()
 async def effect(ctx, effectName):
