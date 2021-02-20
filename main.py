@@ -14,6 +14,7 @@ import enchantdb
 from enchant import *
 from item import Item
 
+import platform
 
 class RuleBook():
     def __init__(self):
@@ -154,7 +155,10 @@ async def effect(ctx, effectName):
         sourceFile = f"sounds/{effectName}"
     #if os.path.exists(sourceFile) != True:
     #    raise FileNotFoundError()
-    audio = discord.FFmpegPCMAudio(executable="bin/ffmpeg.exe", source=sourceFile)
+    if platform.system() == 'Windows':
+        audio = discord.FFmpegPCMAudio(executable="bin/ffmpeg.exe", source=sourceFile)
+    else:
+        audio = discord.FFmpegPCMAudio(source=sourceFile)
     voiceClient.play(audio)
 
 @bot.command(name="강화")
