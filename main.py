@@ -141,9 +141,12 @@ async def join(ctx):
 
 @bot.command()
 async def leave(ctx):
-    voiceChannel = ctx.author.voice.channel
-    if voiceChannel is not None:
-        await voiceChannel.disconnect()
+    authorVoiceChannel = ctx.author.voice.channel
+    if authorVoiceChannel is not None:
+        for voiceClient in bot.voice_clients:
+            if voiceClient != None and voiceClient.channel == authorVoiceChannel:
+                voiceClient.disconnect()
+                pass
 
 @bot.command()
 async def effect(ctx, effectName):
