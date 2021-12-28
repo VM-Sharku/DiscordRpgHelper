@@ -173,6 +173,9 @@ async def effect(ctx, effectName):
 
 @bot.command(name="강화")
 async def enchant(ctx, itemname="당신의 미래"):
+    if itemname in Blacklist:
+        await ctx.send(f"{itemname} 은 강화하실 수 없습니다.")
+        pass
     uid = ctx.author.id
     item = bot.EnchantDB.getItem(itemname)
     if item == None:

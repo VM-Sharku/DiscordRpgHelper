@@ -19,7 +19,7 @@ class EnchantResult(Enum):
 class EnchantChance():
     def __init__(self,successRate=250,normalRate=250,failRate=250,breakRate=250):
         if successRate + normalRate + failRate + breakRate != 1000:
-            raise ValueError(f"Sum of chances is not 100. {successRate + normalRate + failRate + breakRate}")
+            raise ValueError(f"Sum of chances is not 1000. {successRate + normalRate + failRate + breakRate}")
         self.__Success = successRate
         self.__Normal = normalRate
         self.__Fail = failRate
@@ -63,6 +63,9 @@ EnchantChanceTable = {
     22:EnchantChance(30,0,776,194),
     23:EnchantChance(20,0,686,294),
     24:EnchantChance(10,0,594,396),
+}
+
+Blacklist = {
 }
 
 SuccessMessage = [
