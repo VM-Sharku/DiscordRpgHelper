@@ -2,7 +2,7 @@ import random
 import re
 import sys
 import time
-from asyncio.tasks import sleep
+import asyncio
 from random import randint
 
 import discord
@@ -109,14 +109,14 @@ async def d100(ctx, count=1):
 
 @bot.command(name="다이스tts")
 async def dice_tts(ctx, max=6, count=1):
-    await dice_internal(ctx, max, count, tts=True)
+    await dice_internal(ctx, max, count, use_tts=True)
 
 async def dice_internal(ctx, max=6, count=1, mult=1, ops="", constant=0, use_tts=False):
     if count > 6:
         await ctx.send(f"너무 많이 굴리시네요! 스팸 방지. 5번만 굴려드릴게요.")
         count = 5
     for i in range(count):
-        time.sleep(1)
+        await asyncio.sleep(1)
         if ops == None or ops == "":
             pass
         elif ops == "+":
@@ -241,4 +241,4 @@ if __name__ == "__main__":
     try:
         bot.run(str(sys.argv[1]))
     except IndexError as e:
-        print('run 스크립트로 실행하지 않아서 token 정보를 불러오는데 실패했습니다. ' + e)
+        print(f'token 정보를 불러오는데 실패했습니다. run 스크립트로 실행해주세요.\n{e}')
