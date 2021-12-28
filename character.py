@@ -7,18 +7,19 @@ class Character():
         self.Appearance=[]
         self.Inventory=[]
         self.Buffs=[]
-        self.Health=0
+        self.__Health=0
         self.MaxHealth=0
         self.Equipment=[]
 
     @property
     def Health(self):
-        return self.Health
+        return self.__Health
     
     @Health.setter
     def Health(self, newHP):
-
-    
+        if newHP < 0:
+            newHP = 0
+        self.__Health = newHP
 
 class DWCharacter(Character):
     def __init__(self):
