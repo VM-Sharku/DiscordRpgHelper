@@ -23,7 +23,7 @@ class RuleBook():
     def dice(self, max=6):
         return random.randrange(0,max) + 1
 
-dicePattern = re.compile("(^\d+)d(\d+)((\+|\-)(\d+)){0,1}$")
+dicePattern = re.compile(r"(^\d+)d(\d+)((\+|\-)(\d+)){0,1}$")
 
 class RPGBot(commands.Bot):
     async def invoke(self, ctx):
